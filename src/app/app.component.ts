@@ -9,4 +9,5 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'river-health-bio-assessment-system';
+  currentYear: number = new Date().getFullYear();
 }

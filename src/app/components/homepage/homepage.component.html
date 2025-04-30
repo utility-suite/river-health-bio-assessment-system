@@ -1,0 +1,108 @@
+<div class="container mt-5 d-flex flex-column min-vh-100" id="exportContent">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label fw-bold" for="stationName">Station Name</label>
+      <input type="text" class="form-control" id="stationName" placeholder="Enter Station Name">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold" for="latitude">Latitude</label>
+      <input type="text" class="form-control" id="latitude" placeholder="Enter Latitude">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold" for="longitude">Longitude</label>
+      <input type="text" class="form-control" id="longitude" placeholder="Enter Longitude">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold" for="sampleDate">Date</label>
+      <input type="date" class="form-control" id="sampleDate">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold" for="sampleTime">Time</label>
+      <input type="time" class="form-control" id="sampleTime">
+    </div>
+  </div>
+  <div class="row my-3">
+    <div class="col-md-6 mb-2">
+      <input type="text" class="form-control" [(ngModel)]="familyInput" (input)="onFamilyChange()" placeholder="Enter Family">
+    </div>
+    <div class="col-md-6 mb-2">
+    <select class="form-control" [(ngModel)]="selectedGenera" *ngIf="generaOptions.length > 0">
+      <option value="" disabled selected>Select Genera / Species</option>
+      <option *ngFor="let option of generaOptions" [value]="option">{{ option }}</option>
+    </select>
+</div>
+    <div class="col-12 mb-5">
+      <button class="btn btn-success" (click)="addEntry()">Add Entry</button>
+    </div>
+
+    <h5><b>Instructions:</b></h5>
+    <h6 class="mb-5">
+      Please enter either the Family Name or the Genera/Species Name and click the "Add Entry" button to retrieve the corresponding details.
+      You can add multiple entries sequentially.
+      If only Family is given and no Genera/Species is selected, all species under that Family will be added.
+    </h6>
+  </div>
+  <!-- Table-->
+  <div *ngIf="entries.length > 0" class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-light text-center align-middle">
+        <tr>
+          <th>Family</th>
+          <th>Genera/Species</th>
+          <th>GRSbios</th>
+          <th>HKHbios</th>
+          <th>BMWP</th>
+          <th>BMWP-Thai</th>
+          <th>SingScore</th>
+          <th>BMWP-My</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let entry of entries" class="text-center">
+          <td>{{ entry.Family }}</td>
+          <td>{{ entry.Genera_Species }}</td>
+          <td>{{ entry.GRSbios }}</td>
+          <td>{{ entry.HKHbios }}</td>
+          <td>{{ entry.BMWP }}</td>
+          <td>{{ entry.BMWP_Thai }}</td>
+          <td>{{ entry.SingScore }}</td>
+          <td>{{ entry.BMWP_My }}</td>
+        </tr>
+        <!-- Totals, Averages, and Class Rows -->
+        <tr class="table-primary fw-bold text-center">
+          <td colspan="2">Total</td>
+          <td>{{ totals['GRSbios'] }}</td>
+          <td>{{ totals['HKHbios'] }}</td>
+          <td>{{ totals['BMWP'] }}</td>
+          <td>{{ totals['BMWP_Thai'] }}</td>
+          <td>{{ totals['SingScore'] }}</td>
+          <td>{{ totals['BMWP_My'] }}</td>
+        </tr>
+        <tr class="table-success fw-bold text-center">
+          <td colspan="2">Average</td>
+          <td>{{ averages['GRSbios'] }}</td>
+          <td>{{ averages['HKHbios'] }}</td>
+          <td>{{ averages['BMWP'] }}</td>
+          <td>{{ averages['BMWP_Thai'] }}</td>
+          <td>{{ averages['SingScore'] }}</td>
+          <td>{{ averages['BMWP_My'] }}</td>
+        </tr>
+        <tr class="table-warning fw-bold text-center">
+          <td colspan="2">Class</td>
+          <td>{{ classes['GRSbios'] }}</td>
+          <td>{{ classes['HKHbios'] }}</td>
+          <td>{{ classes['BMWP'] }}</td>
+          <td>{{ classes['BMWP_Thai'] }}</td>
+          <td>{{ classes['SingScore'] }}</td>
+          <td>{{ classes['BMWP_My'] }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reference Image -->
+  <div class="d-flex flex-column align-items-center mt-5 py-5">
+    <h3 class="mb-2"><b>Reference Table</b></h3>
+    <img src="assets/images/RiverHealthIndex.webp" alt="Reference Table" class="img-fluid">
+  </div>
+</div>
