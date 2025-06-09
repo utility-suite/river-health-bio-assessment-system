@@ -2,102 +2,103 @@
   <div class="row g-3">
     <div class="col-md-4">
       <label class="form-label fw-bold" for="stationName">Station Name</label>
-      <input type="text" class="form-control" id="stationName" placeholder="Enter Station Name">
+      <input type="text" class="form-control" id="stationName" placeholder="Enter Station Name" [(ngModel)]="stationName">
     </div>
     <div class="col-md-2">
       <label class="form-label fw-bold" for="latitude">Latitude</label>
-      <input type="text" class="form-control" id="latitude" placeholder="Enter Latitude">
+      <input type="text" class="form-control" id="latitude" placeholder="Enter Latitude" [(ngModel)]="latitude">
     </div>
     <div class="col-md-2">
       <label class="form-label fw-bold" for="longitude">Longitude</label>
-      <input type="text" class="form-control" id="longitude" placeholder="Enter Longitude">
+      <input type="text" class="form-control" id="longitude" placeholder="Enter Longitude" [(ngModel)]="longitude">
     </div>
     <div class="col-md-2">
       <label class="form-label fw-bold" for="sampleDate">Date</label>
-      <input type="date" class="form-control" id="sampleDate">
+      <input type="date" class="form-control" id="sampleDate" [(ngModel)]="sampleDate">
     </div>
     <div class="col-md-2">
       <label class="form-label fw-bold" for="sampleTime">Time</label>
-      <input type="time" class="form-control" id="sampleTime">
+      <input type="time" class="form-control" id="sampleTime" [(ngModel)]="sampleTime">
     </div>
   </div>
-  <div class="row my-3">
-    <div class="col-md-6 mb-2">
-      <input type="text" class="form-control" [(ngModel)]="familyInput" (input)="onFamilyChange()" placeholder="Enter Family">
-    </div>
-    <div class="col-md-6 mb-2">
-    <select class="form-control" [(ngModel)]="selectedGenera" *ngIf="generaOptions.length > 0">
-      <option value="" disabled selected>Select Genera / Species</option>
-      <option *ngFor="let option of generaOptions" [value]="option">{{ option }}</option>
-    </select>
-</div>
-    <div class="col-12 mb-5">
-      <button class="btn btn-success" (click)="addEntry()">Add Entry</button>
+
+  <div class="container mt-5 col-md-10">
+    <div class="input-group mb-3">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Enter Family"
+        [(ngModel)]="familyInput"
+        (input)="onFamilyInputChange()"
+        list="familyList"
+      />
+      <datalist id="familyList">
+        <option *ngFor="let fam of familySuggestions" [value]="fam"></option>
+      </datalist>
+      <button class="btn btn-success" (click)="addEntry()">Add</button>
     </div>
 
-    <h5><b>Instructions:</b></h5>
-    <h6 class="mb-5">
-      Please enter either the Family Name or the Genera/Species Name and click the "Add Entry" button to retrieve the corresponding details.
-      You can add multiple entries sequentially.
-      If only Family is given and no Genera/Species is selected, all species under that Family will be added.
-    </h6>
-  </div>
-  <!-- Table-->
-  <div *ngIf="entries.length > 0" class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead class="table-light text-center align-middle">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Family</th>
+            <th *ngFor="let type of scoreTypes" class="text-center">{{ type }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of entries">
+            <td>{{ entry.Family }}</td>
+            <td *ngFor="let type of scoreTypes" class="text-center">
+              {{ entry[type] === '' || entry[type] === null ? '-' : entry[type] }}
+            </td>
+          </tr>
+        </tbody>
         <tr>
-          <th>Family</th>
-          <th>Genera/Species</th>
-          <th>GRSbios</th>
-          <th>HKHbios</th>
-          <th>BMWP</th>
-          <th>BMWP-Thai</th>
-          <th>SingScore</th>
-          <th>BMWP-My</th>
+          <td style="background-color: transparent; height: 10px; border: none;"></td>
         </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let entry of entries" class="text-center">
-          <td>{{ entry.Family }}</td>
-          <td>{{ entry.Genera_Species }}</td>
-          <td>{{ entry.GRSbios }}</td>
-          <td>{{ entry.HKHbios }}</td>
-          <td>{{ entry.BMWP }}</td>
-          <td>{{ entry.BMWP_Thai }}</td>
-          <td>{{ entry.SingScore }}</td>
-          <td>{{ entry.BMWP_My }}</td>
-        </tr>
-        <!-- Totals, Averages, and Class Rows -->
-        <tr class="table-primary fw-bold text-center">
-          <td colspan="2">Total</td>
-          <td>{{ totals['GRSbios'] }}</td>
-          <td>{{ totals['HKHbios'] }}</td>
-          <td>{{ totals['BMWP'] }}</td>
-          <td>{{ totals['BMWP_Thai'] }}</td>
-          <td>{{ totals['SingScore'] }}</td>
-          <td>{{ totals['BMWP_My'] }}</td>
-        </tr>
-        <tr class="table-success fw-bold text-center">
-          <td colspan="2">Average</td>
-          <td>{{ averages['GRSbios'] }}</td>
-          <td>{{ averages['HKHbios'] }}</td>
-          <td>{{ averages['BMWP'] }}</td>
-          <td>{{ averages['BMWP_Thai'] }}</td>
-          <td>{{ averages['SingScore'] }}</td>
-          <td>{{ averages['BMWP_My'] }}</td>
-        </tr>
-        <tr class="table-warning fw-bold text-center">
-          <td colspan="2">Class</td>
-          <td>{{ classes['GRSbios'] }}</td>
-          <td>{{ classes['HKHbios'] }}</td>
-          <td>{{ classes['BMWP'] }}</td>
-          <td>{{ classes['BMWP_Thai'] }}</td>
-          <td>{{ classes['SingScore'] }}</td>
-          <td>{{ classes['BMWP_My'] }}</td>
-        </tr>
-      </tbody>
-    </table>
+        <tfoot>
+          <tr>
+            <th>Total</th>
+            <td *ngFor="let type of scoreTypes" class="text-center">
+              {{ totals[type] === null || totals[type] === undefined ? 'NA' : totals[type] === 0 && !hasValues(type) ? 'NA' : totals[type] }}
+            </td>
+          </tr>
+          <tr>
+            <th>Average</th>
+            <td *ngFor="let type of scoreTypes" class="text-center">
+              {{ averages[type] === null || averages[type] === undefined ? 'NA' : averages[type] === 0 && !hasValues(type) ? 'NA' : averages[type] }}
+            </td>
+          </tr>
+          <tr>
+            <th>Class</th>
+            <td
+              *ngFor="let type of scoreTypes"
+              class="text-center fw-bold text-dark"
+              [ngClass]="getClassColorClass(classes[type], type)"
+            >
+              {{ classes[type] === null || classes[type] === undefined ? 'NA' : classes[type] }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <button class="btn btn-danger" (click)="resetTable()">Reset</button>
+      <app-export-as-pdf
+        [entries]="entries"
+        [scoreTypes]="scoreTypes"
+        [totals]="totals"
+        [averages]="averages"
+        [classes]="classes"
+        [stationName]="stationName"
+        [latitude]="latitude"
+        [longitude]="longitude"
+        [sampleDate]="sampleDate"
+        [sampleTime]="sampleTime"
+      ></app-export-as-pdf>
+    </div>
   </div>
 
   <!-- Reference Image -->

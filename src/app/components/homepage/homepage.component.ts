@@ -2,145 +2,107 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { familyData } from '../../../data-entries/family';
+import { ExportAsPdfComponent } from '../export-as-pdf/export-as-pdf.component';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ExportAsPdfComponent],
   templateUrl: './homepage.component.html',
   styleUrls: ['./homepage.component.scss']
 })
 export class HomepageComponent {
   familyInput: string = '';
-  selectedGenera: string = '';
-  generaOptions: string[] = [];
-
+  familySuggestions: string[] = [];
   entries: any[] = [];
+  totals: { [key: string]: number | null } = {};
+  averages: { [key: string]: number | null } = {};
+  classes: { [key: string]: string | null } = {};
+  scoreTypes = ['HKHbios', 'BMWP', 'GRSbios', 'BMWP_Thai', 'SingScore', 'BMWP_My'];
+  stationName = '';
+  latitude = '';
+  longitude = '';
+  sampleDate = '';
+  sampleTime = '';
 
-  totals: { [key: string]: number } = {};
-  averages: { [key: string]: number } = {};
-  classes: { [key: string]: string } = {};
-
-  onFamilyChange(): void {
-    const family = this.familyInput.trim().toLowerCase();
-    if (!family) {
-      this.generaOptions = [];
+  onFamilyInputChange(): void {
+    const input = this.familyInput.trim().toLowerCase();
+    if (!input) {
+      this.familySuggestions = [];
       return;
     }
 
-    const match = familyData.find(
-      item => item.Family.toLowerCase() === family
-    );
-
-    if (match) {
-      this.generaOptions = match.Genera_Species
-        .split(',')
-        .map(s => s.trim())
-        .filter((v, i, a) => v && a.indexOf(v) === i);
-    } else {
-      this.generaOptions = [];
+    const allFamilies = new Set<string>();
+    for (let type of this.scoreTypes) {
+      for (let entry of familyData[type]) {
+        allFamilies.add(entry.Family);
+      }
     }
+
+    this.familySuggestions = Array.from(allFamilies).filter(fam =>
+      fam.toLowerCase().startsWith(input)
+    );
   }
 
-  searchFamily() {
-    const family = this.familyInput.trim().toLowerCase();
+  addEntry(): void {
+    const family = this.familyInput.trim();
     if (!family) return;
 
-    const match = familyData.find(
-      item => item.Family.toLowerCase() === family
+    // Check if family exists in at least one score group
+    const presentInAtLeastOne = this.scoreTypes.some(
+      type => familyData[type].some(entry => entry.Family.toLowerCase() === family.toLowerCase())
     );
 
-    if (match) {
-      this.generaOptions = match.Genera_Species
-        .split(',')
-        .map(s => s.trim())
-        .filter((v, i, a) => v && a.indexOf(v) === i);
-    } else {
-      this.generaOptions = [];
-      alert('Family not found!');
-    }
-  }
-
-  addEntry() {
-    const family = this.familyInput.trim();
-    const genera = this.selectedGenera.trim();
-
-    if (!family) {
-      alert('Please enter a Family name.');
+    if (!presentInAtLeastOne) {
+      alert('Family not found in the dataset.');
       return;
     }
 
-    const match = familyData.find(
-      item => item.Family.toLowerCase() === family.toLowerCase()
-    );
-
-    if (!match) {
-      alert('No matching family found!');
+    // Check for duplicate
+    if (this.entries.some(e => e.Family.toLowerCase() === family.toLowerCase())) {
+      alert('Family already added.');
       return;
     }
 
-    const speciesList = match.Genera_Species
-      .split(',')
-      .map(s => s.trim())
-      .filter((v, i, a) => v && a.indexOf(v) === i);
+    const entry: any = { Family: family };
 
-    if (!genera) {
-      // Add single entry with full Genera_Species string
-      this.entries.push({
-        Family: match.Family,
-        Genera_Species: match.Genera_Species,
-        GRSbios: match.GRSbios ?? '',
-        HKHbios: match.HKHbios ?? '',
-        BMWP: match.BMWP ?? '',
-        BMWP_Thai: match['BMWP-Thai'] ?? '',
-        SingScore: match.SingScore ?? '',
-        BMWP_My: match['BMWP-My'] ?? ''
-      });
-    } else {
-      if (!speciesList.includes(genera)) {
-        alert(`Selected species "${genera}" not found under family "${match.Family}"`);
-        return;
-      }
-
-      this.entries.push({
-        Family: match.Family,
-        Genera_Species: genera,
-        GRSbios: match.GRSbios ?? '',
-        HKHbios: match.HKHbios ?? '',
-        BMWP: match.BMWP ?? '',
-        BMWP_Thai: match['BMWP-Thai'] ?? '',
-        SingScore: match.SingScore ?? '',
-        BMWP_My: match['BMWP-My'] ?? ''
-      });
+    for (let type of this.scoreTypes) {
+      const match = familyData[type].find(e => e.Family.toLowerCase() === family.toLowerCase());
+      entry[type] = match ? match.Score : '';
     }
 
+    this.entries.push(entry);
     this.calculateTotalsAndAverages();
-
-    // Reset inputs
     this.familyInput = '';
-    this.selectedGenera = '';
-    this.generaOptions = [];
+    this.familySuggestions = [];
   }
 
   calculateTotalsAndAverages() {
-    const fields = ['GRSbios', 'HKHbios', 'BMWP', 'BMWP_Thai', 'SingScore', 'BMWP_My'];
     this.totals = {};
     this.averages = {};
     this.classes = {};
 
-    fields.forEach(field => {
+    for (let type of this.scoreTypes) {
       const values = this.entries
-        .map(entry => entry[field])
-        .filter(val => val !== '' && val !== null && !isNaN(val))
+        .map(e => e[type])
+        .filter(v => v !== '' && v !== null && !isNaN(v))
         .map(Number);
 
-      const sum = values.reduce((acc, val) => acc + val, 0);
-      const avg = values.length > 0 ? parseFloat((sum / values.length).toFixed(2)) : 0;
+      if (values.length === 0) {
+        // No values, assign null for display as NA
+        this.totals[type] = null;
+        this.averages[type] = null;
+        this.classes[type] = null;
+        continue;
+      }
 
-      this.totals[field] = sum;
-      this.averages[field] = avg;
-      this.classes[field] = this.getClass(avg);
-    });
+      const sum = values.reduce((acc, v) => acc + v, 0);
+      const avg = parseFloat((sum / values.length).toFixed(2));
+
+      this.totals[type] = sum;
+      this.averages[type] = avg;
+      this.classes[type] = this.getClass(avg);
+    }
   }
 
   getClass(avg: number): string {
@@ -151,4 +113,29 @@ export class HomepageComponent {
     return 'E';
   }
 
+  getClassColorClass(classLabel: string | null, type: string): string {
+    if (classLabel === null) {
+      return 'bg-secondary text-dark'; // For NA class
+    }
+    switch (classLabel) {
+      case 'A': return 'bg-primary text-dark';      // Blue
+      case 'B': return 'bg-info text-dark';         // SkyBlue
+      case 'C': return 'bg-success text-dark';      // Green
+      case 'D': return 'bg-warning text-dark';      // Yellow
+      case 'E': return 'bg-danger text-dark';       // Red
+      default: return 'text-dark';
+    }
+  }
+
+  resetTable(): void {
+    this.entries = [];
+    this.totals = {};
+    this.averages = {};
+    this.classes = {};
+  }
+
+  // Helper method to check if there are any valid numeric values for a scoreType
+  hasValues(type: string): boolean {
+    return this.entries.some(e => e[type] !== '' && e[type] !== null && !isNaN(e[type]));
+  }
 }
